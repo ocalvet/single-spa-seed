@@ -22,7 +22,9 @@ const ApplicationsPage = () => {
   return (
     <React.Fragment>
       {apps ? (
-        apps.map(user => <div key={user._id}>{user._id}</div>)
+        apps.map(user => (
+          <div key={user._id}>{`${user.firstName} ${user.lastName}`}</div>
+        ))
       ) : (
         <div>No Applications Loaded</div>
       )}

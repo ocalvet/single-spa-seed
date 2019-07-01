@@ -3,6 +3,7 @@ import axios from 'axios';
 
 const LoginPage = () => {
   const [error, setError] = React.useState();
+  const [signedIn, setSignedIn] = React.useState(false);
   const [email, setEmail] = React.useState('developer@openbasic.io');
   const [password, setPassword] = React.useState('password');
 
@@ -19,11 +20,17 @@ const LoginPage = () => {
     if (response.status !== 200) setError('Wrong email or password!');
     else {
       localStorage.setItem('token', JSON.stringify(response.data.token));
-      window.history.pushState({}, 'applications', '/applications');
+      setSignedIn(true);
+      // add applications to the page
+      setTimeout(() => {
+        window.history.pushState({}, 'applications', '/applications');
+      }, 0);
     }
   };
 
-  return (
+  return signedIn ? (
+    <div id="applications" />
+  ) : (
     <form onSubmit={login}>
       <input onChange={e => setEmail(e.target.value)} value={email} />
       <br />
@@ -31,7 +38,6 @@ const LoginPage = () => {
       <br />
       {error ? <div>{error}</div> : null}
       <button>Signin</button>
-      <div id="applications" />
     </form>
   );
 };
