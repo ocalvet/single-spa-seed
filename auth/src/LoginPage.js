@@ -4,24 +4,21 @@ import axios from 'axios';
 const LoginPage = () => {
   const [error, setError] = React.useState();
   const [signedIn, setSignedIn] = React.useState(false);
-  const [email, setEmail] = React.useState('developer@openbasic.io');
-  const [password, setPassword] = React.useState('password');
+  const [email, setEmail] = React.useState('');
+  const [password, setPassword] = React.useState('');
 
   const login = async event => {
     event.preventDefault();
     setError(undefined);
-    const response = await axios.post(
-      'https://api.staging.openbasic.io/auth/signin',
-      {
-        email,
-        password
-      }
-    );
+    const response = await axios.post(`${process.env.AUTH_SERVICE}`, {
+      email,
+      password
+    });
     if (response.status !== 200) setError('Wrong email or password!');
     else {
       localStorage.setItem('token', JSON.stringify(response.data.token));
       setSignedIn(true);
-      // add applications to the page
+      // Add applications to the page
       setTimeout(() => {
         window.history.pushState({}, 'applications', '/applications');
       }, 0);

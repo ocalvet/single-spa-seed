@@ -26,6 +26,7 @@
   "license": "ISC",
   "dependencies": {
     "axios": "^0.19.0",
+    "dotenv-webpack": "^1.7.0",
     "react": "^16.8.6",
     "react-dom": "^16.8.6",
     "single-spa-react": "^2.10.2"

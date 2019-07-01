@@ -6,14 +6,11 @@ const ApplicationsPage = () => {
   React.useEffect(() => {
     const getApps = async () => {
       const token = JSON.parse(localStorage.getItem('token'));
-      const response = await axios.get(
-        `https://api.staging.openbasic.io/users/search?name=&page=0&pageSize=5`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
+      const response = await axios.get(`${process.env.APPLICATIONS_SERVICE}`, {
+        headers: {
+          Authorization: `Bearer ${token}`
         }
-      );
+      });
       console.log(response);
       if (response.status === 200) setApps(response.data.users);
     };
