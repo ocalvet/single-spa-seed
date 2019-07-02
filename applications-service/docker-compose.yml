@@ -1,0 +1,19 @@
+version: '3.5'
+
+services:
+  applications-service:
+    build: .
+    restart: always
+    environment:
+      MONGO_CONNECT_STRING: mongodb://mongo-db:27017/applications
+      APP_PORT: 3081
+      TOKEN_SECRET: $TOKEN_SECRET
+    labels:
+      - 'traefik.backend=applications-service'
+      - 'traefik.port=3081'
+      - 'traefik.frontend.rule=PathPrefix:/applications'
+
+networks:
+  default:
+    external:
+      name: shims

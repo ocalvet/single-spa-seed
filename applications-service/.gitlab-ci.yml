@@ -1,0 +1,100 @@
+stages:
+  - test
+  - build
+  - deploy
+
+#Tentative CI without registry or Kubernetes for orchestration. Deploying directly to DOCKER deamon of the server
+
+unit-tests:
+  tags:
+    - gotech
+  image: node:12
+  services:
+    - name: docker:dind
+  stage: test
+  script:
+    - echo "testing"
+
+#Building means build the image directly in each environmet server. The right way is doing one build and push to registry.
+
+build-dev:
+  image: docker:stable
+  services:
+    - name: docker:dind
+  stage: build
+  tags:
+    - gotech
+  script:
+    - docker login -u "gitlab-ci-token" -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker build --target prod -t $CI_REGISTRY_IMAGE .
+    - docker push $CI_REGISTRY_IMAGE
+  only:
+    - master
+
+#****************************************************************************************************************************
+
+azure:
+  image: docker:stable
+  stage: deploy
+  tags:
+    - docker-sock
+  script:
+    - docker login -u "gitlab-ci-token" -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker stop $CI_PROJECT_NAME || true
+    - docker rm $CI_PROJECT_NAME || true
+    - docker pull $CI_REGISTRY_IMAGE:latest
+    - 'docker run -d --name $CI_PROJECT_NAME --restart always --network openbasic
+      -e MONGO_CONNECT_STRING=mongodb://db:27017/signature
+      -e APP_PORT=8000
+      -e TOKEN_SECRET=$TOKEN_SECRET
+      -e ORDERS_URL=http://orders-service:8000
+      -e USERS_URL=http://users-service:8000
+      -e CLOUDINARY_URL=$CLOUDINARY_URL
+      -e BILLTRUST_HOST=ftp-server
+      -e BILLTRUST_USER=test
+      -e BILLTRUST_PASSWORD=**test123**
+      --label "traefik.backend=$CI_PROJECT_NAME"
+      --label "traefik.port=8000"
+      --label "traefik.enable=true"
+      --label "traefik.frontend.rule=Host:api.staging.openbasic.io;PathPrefix:/signature-capture"
+      $CI_REGISTRY_IMAGE:latest'
+  environment:
+    name: jjf-azure
+    url: https://api.staging.openbasic.io/signature-capture
+  only:
+    - master
+
+gotech:
+  image: docker:stable
+  services:
+    - name: docker:dind
+  stage: deploy
+  tags:
+    - gotech
+  script:
+    - export DOCKER_HOST=tcp://10.10.1.10:2375
+    - docker login -u "gitlab-ci-token" -p $CI_JOB_TOKEN $CI_REGISTRY
+    - docker stop $CI_PROJECT_NAME || true
+    - docker rm $CI_PROJECT_NAME || true
+    - docker pull $CI_REGISTRY_IMAGE:latest
+    - 'docker run -d --name $CI_PROJECT_NAME --restart always --network openbasic
+      -e MONGO_CONNECT_STRING=mongodb://10.10.1.30:27017/signature
+      -e APP_PORT=8000
+      -e TOKEN_SECRET=$TOKEN_SECRET
+      -e ORDERS_URL=https://api.vpsupply.com
+      -e USERS_URL=http://users-service:8000
+      -e CLOUDINARY_URL=$CLOUDINARY_URL
+      -e BILLTRUST_HOST=ftp.openbasic.io
+      -e BILLTRUST_USER=test
+      -e BILLTRUST_PASSWORD=**test123**
+      --label "traefik.backend=$CI_PROJECT_NAME"
+      --label "traefik.port=8000"
+      --label "traefik.enable=true"
+      --label "traefik.frontend.rule=Host:api.openbasic.io;PathPrefix:/signature-capture"
+      $CI_REGISTRY_IMAGE:latest'
+  environment:
+    name: gotech
+    url: https://api.openbasic.io/signature-capture
+  only:
+    - master
+  when: manual
